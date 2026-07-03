@@ -206,6 +206,7 @@ main{padding:14px;max-width:1200px;margin:0 auto;}
   <div><h1>Quiniela Mundial 2026</h1><p>Fase Eliminatoria</p></div>
   <div class="hright">
     <span><span class="conn-dot" id="connDot"></span><span id="connTxt" style="font-size:.7rem;color:var(--gray2)">conectando...</span></span>
+    <span id="liveIndicator" style="display:none;font-size:.7rem;color:#5effe8;animation:pulse 1s infinite">● en vivo</span>
     <div class="user-pill"><span id="hName">—</span><span class="rb" id="hRole"></span></div>
     <button class="btn-out" onclick="logout()">Salir</button>
     <span id="syncStatus"></span>
@@ -362,6 +363,8 @@ const fl=t=>FLAGS[t]||'🏳', nm=t=>NAMES[t]||t;
 const ini=n=>n.trim().split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
 const $=id=>document.getElementById(id);
 function isLocked(rid,mid){
+  // Admin nunca ve locked — solo players
+  if(SESSION.role==='admin') return false;
   const r=MEM.results[rid];if(r&&r[mid]&&r[mid].winner)return true;
   const dl=(MEM.deadlines[rid]||{})[mid];if(dl&&new Date()>new Date(dl))return true;
   return false;
@@ -433,6 +436,8 @@ async function loadAll(){
 function setConn(ok){
   $('connDot').className='conn-dot'+(ok?'':' off');
   $('connTxt').textContent=ok?'en línea':'sin conexión';
+  const li=$('liveIndicator');
+  if(li) li.style.display=ok?'':'none';
 }
 
 // ════════════════════════════════════════════════════
@@ -465,7 +470,11 @@ async function reloadResults(){
     if(!MEM.results[r.round_id])MEM.results[r.round_id]={};
     MEM.results[r.round_id][r.match_id]={winner:r.winner,scoreH:r.score_h,scoreA:r.score_a};
   });
-  propagate();renderAll();
+  propagate();
+  renderAll();
+  // Flash live indicator
+  const li=$('liveIndicator');
+  if(li){li.style.color='#FFD700';setTimeout(()=>{li.style.color='#5effe8';},1000);}
 }
 async function reloadParticipants(){
   const {data}=await sb.from('participants').select('*').order('created_at');
@@ -492,10 +501,17 @@ function propagate(){
     return round.matches.map(m=>(MEM.results[rid]||{})[m.id]).filter(x=>x&&x.winner).map(x=>x.winner);
   }
   const w32=W('r32');
-  if(w32.length===16){
-    MEM.rounds[1].matches=[];
-    for(let i=0;i<16;i+=2) MEM.rounds[1].matches.push({id:`r16m${i/2+1}`,home:w32[i],away:w32[i+1]});
-    saveRoundsExtra();
+  if(w32.length>=2){
+    // Generar octavos con los ganadores disponibles (de a pares)
+    const newR16=[];
+    for(let i=0;i+1<w32.length;i+=2){
+      newR16.push({id:`r16m${i/2+1}`,home:w32[i],away:w32[i+1]});
+    }
+    if(newR16.length!==MEM.rounds[1].matches.length || 
+       JSON.stringify(newR16)!==JSON.stringify(MEM.rounds[1].matches)){
+      MEM.rounds[1].matches=newR16;
+      saveRoundsExtra();
+    }
   }
   const wr16=W('r16');
   if(wr16.length===8){
@@ -950,7 +966,7 @@ function renderAll(){
   const ok=await loadAll();
   $('splash').style.display='none';
   if(!ok){
-    $('splashErr').textContent='No se pudo conectar a Supabase. Verifica tus credenciales.';
+    $('splashErr').textContent='No se pudo conectar. Verifica tu conexión a internet.';
     $('splash').style.display='flex';return;
   }
   buildLoginSel();
