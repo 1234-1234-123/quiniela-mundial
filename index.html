@@ -706,7 +706,7 @@ function renderPredictions(){
     const resLabel=played?`<span class="confirmed-badge">✓ ${fl(r.winner)} ${nm(r.winner)} ${scoreStr(r)}</span>`:locked?'<span class="locked-badge">🔒 cerrado</span>':'';
     const form=locked
       ?`<div style="background:rgba(0,0,0,.2);border-radius:7px;padding:8px 10px;font-size:.78rem;color:var(--gray2)">
-          🔒 ${pr.winner?`Elegiste: <strong style="color:var(--white)">${fl(pr.winner)} ${nm(pr.winner)}</strong>${pr.scoreH!==null&&pr.scoreH!==undefined?' ('+pr.scoreH+'-'+pr.scoreA+')':''}`:' Sin predicción.'} ${pill}</div>`
+          🔒 ${pr.winner?`Elegiste: <strong style="color:var(--white)">${fl(pr.winner)} ${nm(pr.winner)}</strong>${(pr.scoreH!==null&&pr.scoreH!==undefined&&pr.scoreA!==null&&pr.scoreA!==undefined)?' ('+pr.scoreH+'-'+pr.scoreA+')':''}`:' Sin predicción.'} ${pill}</div>`
       :`<div style="background:rgba(0,0,0,.17);border-radius:7px;padding:8px 11px;">
           <div style="font-size:.72rem;color:var(--gray2);margin-bottom:6px">Tu predicción:</div>
           <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
